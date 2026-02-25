@@ -40,7 +40,12 @@
       "title_en": "GOD TO GREAT",
       "text_cat": "Aquests dies estic treballant sobre l’ambició, l’aspiracionalitat i altres coses que es deixen enrrere.",
       "text_en": "These days I’m working on ambition, aspiration, and other things that get left behind.",
-      "links": []
+      "links": [  {
+          "text_cat": "top 10 slides",
+          "text_en": "top 10 slides",
+          "url": "data/top 10 slides web provisional.pdf"
+        }]
+      
     }
   ],
   "qui-juga-amb-foc": [
