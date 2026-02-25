@@ -291,11 +291,12 @@ body {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.5rem;
+  font-size: 1rem;
   transition: opacity var(--transition-speed) ease-in-out;
 }
 
 .slide-links a {
-  font-size: 0.875rem;
+  font-size: inherit;
 }
 
 /* Image zoom modal */
@@ -448,8 +449,8 @@ body {
     margin-bottom: 1rem;
   }
 
-  .slide-links a {
-    font-size: 0.75rem;
+  .slide-links {
+    font-size: 0.875rem;
   }
 
   /* Mobile footer: ← cat/en → */
