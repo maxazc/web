@@ -7,11 +7,11 @@
       "title_en": "ABOUT",
       "text_cat": [
         "Hola! Em dic Max. El meu currículum complet indica que he treballat al metro com a conductor de tren, com a auxiliar de vol en un avió i com a voluntari en un equip de rem en llagut mediterrani. En un futur m’agradaria dedicar-me exclusivament a la tècnica d’arboricultura urbana tot i que ara sóc estudiant d’arts i visc a Nova York. Em prenc molt seriosament el repte d’esborrar els límits entre l’art i la vida.",
-        "Els meus projectes expandeixen la recerca artística a través d’eines com conferències performatives, instal·lacions i accions vinculades a contextos específics. A partir d’un procés d’investigació extens en primera persona, proposo situacions anecdòtiques que utilitzen l’absurd per generar debats i evidenciar alguns fets que m’interpel·len. Tot i que confio en processos ambigus i dispersos, m’esforço per poder compartir cada projecte de manera entenedora."
+        "Els meus projectes expandeixen la recerca artística a través d’eines com <a href='https://maxazemar.com/project/eqneua/cat'>conferències performatives</a>, instal·lacions i accions vinculades a contextos específics. A partir d’un procés d’investigació extens en primera persona, proposo situacions anecdòtiques que utilitzen l’absurd per generar debats i evidenciar alguns fets que m’interpel·len. Tot i que confio en processos ambigus i dispersos, m’esforço per poder compartir cada projecte de manera entenedora."
       ],
       "text_en": [
         "Hello! My name is Max. My full CV states that I have worked in the subway as a train driver, as a flight attendant on an airplane, and as a volunteer on a Mediterranean llagut rowing team. However, in the future I would like to dedicate myself exclusively to urban arboriculture techniques, although I am currently an arts student and live in New York. I’m doing my best to blur the gap between art and life.",
-        "My projects expand artistic research through tools such as performative lectures, installations, and actions linked to specific contexts. Based on an extensive first-person research process, I propose anecdotal situations that use absurdity to generate debate and highlight certain issues that challenge or concern me. Although I trust in ambiguous and dispersed processes, I strive to share each project in a way that is easy to understand."
+        "My projects expand artistic research through tools such as <a href='https://maxazemar.com/project/eqneua/en'>performative lectures</a>, installations, and actions linked to specific contexts. Based on an extensive first-person research process, I propose anecdotal situations that use absurdity to generate debate and highlight certain issues that challenge or concern me. Although I trust in ambiguous and dispersed processes, I strive to share each project in a way that is easy to understand."
       ],
       "links": [
         {
@@ -32,7 +32,7 @@
       ]
     }
   ],
-  "god-to-great": [
+  "god": [
     {
       "image": "img/1.webp",
       "group": 2,
@@ -47,33 +47,33 @@
         "Photo by: <a href='https://bbonaventura.com/'>Bernat Bonaventura</a>"
       ],
       "links": [  {
-          "text_cat": "top 10 slides",
-          "text_en": "top 10 slides",
+          "text_cat": "Top 10 slides",
+          "text_en": "Top 10 slides",
           "url": "data/top 10 slides web provisional.pdf"
         }]
       
     }
   ],
-  "qui-juga-amb-foc": [
+  "foc": [
     {
       "image": "img/2.webp",
       "group": 2,
       "title_cat": "QUI JUGA AMB FOC",
       "title_en": "QUI JUGA AMB FOC",
       "text_en": [
-        "Performative lectures usually operate at a midpoint between two poles: the boring academic lecture and the demagogic TED Talk. That is why I want to introduce a third, destabilizing pole: the contemporary fakir. During a lecture in which I talk about fire, I perform fakir tricks: I spit fire from my mouth, set myself on fire, and the scenography burns.",
-        "The philosopher <a href='https://cup.columbia.edu/book/pyropolitics/9783838219721/'>Michael Marder</a> explains that, since modernity, fire has been split into two forces. He argues that the Enlightenment symbolically separated the cold light of reason—which shines but does not burn—from heat without light: the embodiment of evil, terrorism, that which is senseless, absurd, or gratuitous. Nevertheless, he maintains that fire represents a unity that encompasses and transcends this duality: an event in which theory and practice converge. Even though <a href='https://www.youtube.com/watch?v=u3GFrvVOs24&list=RDu3GFrvVOs24&start_radio=1'>Los Chunguitos</a> insist on reminding us of the aphorism that says, “Those who play with fire get burned,” this research aims to show that those who play with fire not only get burned, but also shine.",
+        "<a href='https://maxazemar.com/project/eqneua/en'>Performative lectures</a> usually operate at a midpoint between two poles: the boring academic lecture and the demagogic TED Talk. That is why I want to introduce a third, destabilizing pole: the contemporary fakir. During a lecture in which I talk about fire, I perform fakir tricks: I spit fire from my mouth, set myself on fire, and the scenography burns.",
+        "The philosopher <a href='https://cup.columbia.edu/book/pyropolitics/9783838219721/'>Michael Marder</a> explains that, since modernity, fire has been split into two forces. He argues that the Enlightenment symbolically separated the cold light of reason—which shines but does not burn—from heat without light: the embodiment of evil, terrorism, that which is senseless, absurd, or gratuitous. Nevertheless, he maintains that fire represents a unity that encompasses and transcends this duality: an event in which theory and practice converge. Even though Los Chunguitos insist on reminding us of the aphorism that says, “Those who play with fire get burned,” this research aims to show that those who play with fire not only get burned, but also shine.",
         "Photo by: <a href='https://www.instagram.com/aumontardit/'>Aurembiaix Montardit</a>"
       ],
       "text_cat": [
-        "Les conferències performatives solen moure’s en un punt intermedi entre dos eixos: l’avorrida classe magistral i la TED Talk demagògica. És per això que vull introduir un tercer pol desestabilitzador: el faquir contemporani. Durant una conferència en què parlo sobre el foc faig trucs de faquir: escupo foc per la boca, m’encenc en flames i se’m crema l’escenografia.",
-        "El filòsof <a href='https://nedediciones.com/tienda/huellas-y-senales/piropolitica-en-un-mundo-en-llamas/'>Michael Marder</a> explica que, des de la modernitat, el foc s’ha dividit en dues forces. Assegura que la Il·lustració va separar simbòlicament la llum freda de la raó —que només brilla, però no crema— i la calor sense llum: l’encarnació del mal, el terrorisme, allò insensat, absurd o gratuït. Tot i això, sosté que el foc suposa una unitat que engloba i transcendeix aquesta dualitat: un esdeveniment en què teoria i pràctica convergeixen. Malgrat que <a href='https://www.youtube.com/watch?v=u3GFrvVOs24&list=RDu3GFrvVOs24&start_radio=1'>Los Chunguitos</a> s’entestin a recordar-nos aquell aforisme que diu que «Quien juega con fuego, con fuego se quema», aquesta recerca vol demostrar que qui juga amb foc no només es crema, sinó que també brilla.",
+        "<a href='https://maxazemar.com/project/eqneua/cat'>Les conferències performatives</a> solen moure’s en un punt intermedi entre dos eixos: l’avorrida classe magistral i la TED Talk demagògica. És per això que vull introduir un tercer pol desestabilitzador: el faquir contemporani. Durant una conferència en què parlo sobre el foc faig trucs de faquir: escupo foc per la boca, m’encenc en flames i se’m crema l’escenografia.",
+        "El filòsof <a href='https://nedediciones.com/tienda/huellas-y-senales/piropolitica-en-un-mundo-en-llamas/'>Michael Marder</a> explica que, des de la modernitat, el foc s’ha dividit en dues forces. Assegura que la Il·lustració va separar simbòlicament la llum freda de la raó —que només brilla, però no crema— i la calor sense llum: l’encarnació del mal, el terrorisme, allò insensat, absurd o gratuït. Tot i això, sosté que el foc suposa una unitat que engloba i transcendeix aquesta dualitat: un esdeveniment en què teoria i pràctica convergeixen. Malgrat que Los Chunguitos s’entestin a recordar-nos aquell aforisme que diu que «Quien juega con fuego, con fuego se quema», aquesta recerca vol demostrar que qui juga amb foc no només es crema, sinó que també brilla.",
         "Foto per: <a href='https://www.instagram.com/aumontardit/'>Aurembiaix Montardit</a>"
       ],
       "links": [
         {
-          "text_cat": "diapositives",
-          "text_en": "slides",
+          "text_cat": "Diapositives",
+          "text_en": "Slides",
           "url": "data/Foc_E3K_compartir.pdf"
         },
         {
@@ -84,7 +84,7 @@
       ]
     }
   ],
-  "el-que-no-es-un-arbre": [
+  "arbre": [
     {
       "image": "img/3.webp",
       "group": 2,
@@ -119,7 +119,7 @@
       ]
     }
   ],
-  "busco-pis": [
+  "pis": [
     {
       "image": "img/4.webp",
       "group": 2,
@@ -160,7 +160,7 @@
       ]
     }
   ],
-  "getting-by": [
+  "gettingby": [
     {
       "image": "img/5.webp",
       "group": 2,
@@ -228,7 +228,7 @@
       ]
     }
   ],
-  "cara-pils": [
+  "carapils": [
     {
       "image": "img/7.webp",
       "group": 2,
@@ -261,7 +261,7 @@
       ]
     }
   ],
-  "propietat-intellectual": [
+  "corporate": [
     {
       "image": "img/8.webp",
       "group": 2,
@@ -278,7 +278,7 @@
       "links": []
     }
   ],
-  "grup-d-estudi": [
+  "gde": [
     {
       "image": "img/9.webp",
       "group": 3,
@@ -319,7 +319,7 @@
       "links": []
     }
   ],
-  "other-trash-stop-theatre": [
+  "trash": [
     {
       "image": "img/10.webp",
       "group": 3,
