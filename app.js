@@ -17,6 +17,20 @@ const SEO = {
 
 const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:']);
 const ALLOWED_INLINE_TAGS = new Set(['a', 'em', 'strong', 'b', 'i', 'br']);
+const ARBRE_STAMP_SOURCES = [
+  'data/svg/trees/1296971.svg',
+  'data/svg/trees/1325107.svg',
+  'data/svg/trees/1502199.svg'
+];
+const ARBRE_STAMP_TARGET_SLUG = 'arbre';
+
+const arbreStampState = {
+  active: false,
+  startedAt: 0,
+  timeoutId: null,
+  layer: null,
+  stampCount: 0
+};
 
 // === DOM references ===
 const el = {
@@ -222,6 +236,121 @@ function resolveAsset(path) {
   return '/' + String(path).replace(/^\/+/, '');
 }
 
+function getResponsiveImageSources(path) {
+  const original = resolveAsset(path);
+  if (!original) {
+    return { src: '', srcset: '', sizes: '', original: '' };
+  }
+
+  const match = original.match(/^(.*)\.webp$/i);
+  if (!match) {
+    return { src: original, srcset: '', sizes: '', original };
+  }
+
+  const base = match[1];
+  const small = `${base}-640.webp`;
+  const medium = `${base}-1200.webp`;
+  return {
+    src: original,
+    srcset: `${small} 640w, ${medium} 1200w, ${original} 2000w`,
+    sizes: '(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px',
+    original
+  };
+}
+
+function randomChoice(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function ensureArbreStampLayer() {
+  if (arbreStampState.layer && document.body.contains(arbreStampState.layer)) {
+    return arbreStampState.layer;
+  }
+  let layer = document.getElementById('tree-stamp-layer');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.id = 'tree-stamp-layer';
+    document.body.appendChild(layer);
+  }
+  arbreStampState.layer = layer;
+  return layer;
+}
+
+function clearArbreStamps() {
+  const layer = ensureArbreStampLayer();
+  layer.innerHTML = '';
+  arbreStampState.stampCount = 0;
+}
+
+function getArbreStampDelayMs(elapsedMs) {
+  const startMs = 3000;
+  const endMs = 100;
+  const rampMs = 30000;
+  const progress = Math.min(1, elapsedMs / rampMs);
+  return startMs + (endMs - startMs) * progress;
+}
+
+function spawnArbreStamp() {
+  const layer = ensureArbreStampLayer();
+  const stamp = document.createElement('img');
+
+  stamp.className = 'tree-stamp';
+  stamp.src = resolveAsset(randomChoice(ARBRE_STAMP_SOURCES));
+  stamp.alt = '';
+  stamp.setAttribute('aria-hidden', 'true');
+
+  const width = 90 + Math.random() * 100; // half-size: 90-190px
+  const left = Math.random() * 100;
+  const top = Math.random() * 100;
+  const hue = 105;
+
+  stamp.style.width = `${width.toFixed(1)}px`;
+  stamp.style.left = `${left.toFixed(2)}vw`;
+  stamp.style.top = `${top.toFixed(2)}vh`;
+  stamp.style.transform = 'translate(-50%, -50%)';
+  stamp.style.setProperty('--stamp-hue', `${hue.toFixed(1)}deg`);
+  stamp.style.opacity = '1';
+
+  layer.appendChild(stamp);
+  arbreStampState.stampCount += 1;
+}
+
+function scheduleNextArbreStamp() {
+  if (!arbreStampState.active) return;
+
+  const elapsedMs = performance.now() - arbreStampState.startedAt;
+  const delayMs = getArbreStampDelayMs(elapsedMs);
+
+  arbreStampState.timeoutId = window.setTimeout(() => {
+    spawnArbreStamp();
+    scheduleNextArbreStamp();
+  }, delayMs);
+}
+
+function startArbreStamping() {
+  if (arbreStampState.active) return;
+  arbreStampState.active = true;
+  arbreStampState.startedAt = performance.now();
+  scheduleNextArbreStamp();
+}
+
+function stopArbreStamping() {
+  arbreStampState.active = false;
+  if (arbreStampState.timeoutId) {
+    window.clearTimeout(arbreStampState.timeoutId);
+    arbreStampState.timeoutId = null;
+  }
+  clearArbreStamps();
+}
+
+function syncArbreStamping(slug) {
+  if (slug === ARBRE_STAMP_TARGET_SLUG) {
+    startArbreStamping();
+    return;
+  }
+  stopArbreStamping();
+}
+
 function syncURLAndSEO(slug, slide) {
   const relativeURL = buildPath(slug, state.lang);
   const canonicalURL = `${SEO.baseUrl}${buildPath(slug, state.lang)}`;
@@ -354,6 +483,8 @@ async function renderSlide(withTransition = true) {
   const slides = state.data[slug];
   const slide = slides[state.currentSlideIndex];
 
+  syncArbreStamping(slug);
+
   // Fade out
   if (withTransition) {
     state.isTransitioning = true;
@@ -366,13 +497,22 @@ async function renderSlide(withTransition = true) {
 
   // Image
   if (slide.image) {
-    el.slideImage.src = resolveAsset(slide.image);
+    const responsive = getResponsiveImageSources(slide.image);
+    el.slideImage.src = responsive.src;
+    el.slideImage.srcset = responsive.srcset;
+    el.slideImage.sizes = responsive.sizes;
+    el.slideImage.dataset.fullsrc = responsive.original;
+    el.slideImage.loading = 'eager';
+    el.slideImage.decoding = 'async';
     el.slideImage.alt = getProjectTitle(slug);
     el.slideImage.style.display = 'block';
     el.slideImage.parentElement.style.display = 'flex';
     el.slideImage.onload = updateVerticalCentering;
   } else {
     el.slideImage.src = '';
+    el.slideImage.srcset = '';
+    el.slideImage.sizes = '';
+    delete el.slideImage.dataset.fullsrc;
     el.slideImage.alt = '';
     el.slideImage.style.display = 'none';
     el.slideImage.parentElement.style.display = 'none';
@@ -448,7 +588,12 @@ function renderThumbs(currentSlug) {
     });
 
     const img = document.createElement('img');
-    img.src = resolveAsset(slides[0].image);
+    const responsive = getResponsiveImageSources(slides[0].image);
+    img.src = responsive.src;
+    img.srcset = responsive.srcset;
+    img.sizes = '(max-width: 768px) 44vw, 160px';
+    img.loading = 'lazy';
+    img.decoding = 'async';
     img.alt = getProjectTitle(slug);
     btn.appendChild(img);
     el.slideThumbs.appendChild(btn);
@@ -601,7 +746,7 @@ async function init() {
   // Image click → zoom
   el.slideImage.addEventListener('click', (e) => {
     e.stopPropagation();
-    openImageModal(el.slideImage.src, el.slideImage.alt);
+    openImageModal(el.slideImage.dataset.fullsrc || el.slideImage.currentSrc || el.slideImage.src, el.slideImage.alt);
   });
 
   // Keyboard
