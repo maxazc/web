@@ -111,12 +111,15 @@ function getSafeLinkURL(url) {
   if (typeof url !== 'string') return null;
   const trimmed = url.trim();
   if (!trimmed) return null;
-  try {
-    const parsed = new URL(trimmed, window.location.origin);
-    return SAFE_LINK_PROTOCOLS.has(parsed.protocol) ? trimmed : null;
-  } catch (err) {
-    return null;
-  }
+
+  // Allow absolute http(s), mailto and tel as-is
+  if (/^(https?:\/\/|mailto:|tel:)/i.test(trimmed)) return trimmed;
+
+  // If the link already starts with a root slash, keep it
+  if (trimmed.startsWith('/')) return trimmed;
+
+  // Otherwise treat it as a site-root relative asset and normalize
+  return '/' + trimmed.replace(/^\/+/, '');
 }
 
 function appendSanitizedInlineHTML(target, value) {
@@ -197,6 +200,13 @@ function buildQueryString(slug, lang = state.lang) {
   return params.toString();
 }
 
+function buildPath(slug, lang = state.lang) {
+  if (!slug || slug === 'about') return '/';
+  const safeSlug = encodeURIComponent(slug);
+  const safeLang = lang === 'cat' ? 'cat' : 'en';
+  return `/project/${safeSlug}/${safeLang}`;
+}
+
 function toAbsoluteURL(path) {
   if (!path) return `${SEO.baseUrl}/${SEO.defaultImage}`;
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
@@ -204,14 +214,19 @@ function toAbsoluteURL(path) {
   return `${SEO.baseUrl}/${normalized}`;
 }
 
+// Resolve an asset path to an absolute path from the site root so
+// relative paths still work when the SPA changes the browser pathname.
+function resolveAsset(path) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  return '/' + String(path).replace(/^\/+/, '');
+}
+
 function syncURLAndSEO(slug, slide) {
-  const query = buildQueryString(slug);
-  const caQuery = buildQueryString(slug, 'cat');
-  const enQuery = buildQueryString(slug, 'en');
-  const relativeURL = `${window.location.pathname}${query ? `?${query}` : ''}`;
-  const canonicalURL = `${SEO.baseUrl}/${query ? `?${query}` : ''}`;
-  const caURL = `${SEO.baseUrl}/${caQuery ? `?${caQuery}` : ''}`;
-  const enURL = `${SEO.baseUrl}/${enQuery ? `?${enQuery}` : ''}`;
+  const relativeURL = buildPath(slug, state.lang);
+  const canonicalURL = `${SEO.baseUrl}${buildPath(slug, state.lang)}`;
+  const caURL = `${SEO.baseUrl}${buildPath(slug, 'cat')}`;
+  const enURL = `${SEO.baseUrl}${buildPath(slug, 'en')}`;
   const projectTitle = getProjectTitle(slug);
   const title = SEO.siteName;
   const description = getProjectDescription(slug);
@@ -236,8 +251,9 @@ function syncURLAndSEO(slug, slide) {
   if (el.metaTwitterImage) el.metaTwitterImage.content = imageURL;
 
   try {
-    if (window.location.search !== (query ? `?${query}` : '')) {
-      window.history.replaceState({ slug, lang: state.lang }, '', relativeURL);
+    const newPath = relativeURL;
+    if (window.location.pathname + window.location.search !== newPath) {
+      window.history.replaceState({ slug, lang: state.lang }, '', newPath);
     }
   } catch (err) {
     console.warn('could not sync URL', err);
@@ -350,7 +366,7 @@ async function renderSlide(withTransition = true) {
 
   // Image
   if (slide.image) {
-    el.slideImage.src = slide.image;
+    el.slideImage.src = resolveAsset(slide.image);
     el.slideImage.alt = getProjectTitle(slug);
     el.slideImage.style.display = 'block';
     el.slideImage.parentElement.style.display = 'flex';
@@ -432,7 +448,7 @@ function renderThumbs(currentSlug) {
     });
 
     const img = document.createElement('img');
-    img.src = slides[0].image;
+    img.src = resolveAsset(slides[0].image);
     img.alt = getProjectTitle(slug);
     btn.appendChild(img);
     el.slideThumbs.appendChild(btn);
@@ -529,14 +545,30 @@ function closeImageModal() {
 
 // === URL parsing ===
 function parseURL() {
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get('slug');
-  const lang = params.get('lang');
-  if (slug && state.projects.includes(slug)) {
-    state.currentProjectIndex = state.projects.indexOf(slug);
+  // Support path-based URLs: /project/:slug/:lang
+  const path = window.location.pathname || '/';
+  const parts = path.split('/').filter(Boolean);
+  if (parts[0] === 'project') {
+    const slug = parts[1] || null;
+    const lang = parts[2] || null;
+    if (slug && state.projects.includes(slug)) {
+      state.currentProjectIndex = state.projects.indexOf(slug);
+    }
+    if (lang === 'en' || lang === 'cat' || lang === 'ca') {
+      state.lang = (lang === 'en') ? 'en' : 'cat';
+    }
+    return;
   }
-  if (lang === 'en' || lang === 'cat') {
-    state.lang = lang;
+
+  // Fallback to query params for older links
+  const params = new URLSearchParams(window.location.search);
+  const qslug = params.get('slug');
+  const qlang = params.get('lang');
+  if (qslug && state.projects.includes(qslug)) {
+    state.currentProjectIndex = state.projects.indexOf(qslug);
+  }
+  if (qlang === 'en' || qlang === 'cat') {
+    state.lang = qlang;
   }
 }
 
