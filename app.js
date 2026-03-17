@@ -1375,10 +1375,8 @@ function handleSlideTextClick(event) {
   if (aboutContextTrigger) {
     if (getCurrentSlug() !== ABOUT_TARGET_SLUG) return;
     event.preventDefault();
-    aboutRevealState.active = true;
-    el.slideText.classList.add('about-reveal-active');
-    el.slideLinks.classList.add('about-reveal-active');
-    applyAboutRevealLinks(el.slideText, ABOUT_TARGET_SLUG);
+    aboutRevealState.active = !aboutRevealState.active;
+    renderSlide(false);
     return;
   }
 
