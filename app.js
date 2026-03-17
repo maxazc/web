@@ -18,9 +18,31 @@ const SEO = {
 const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:']);
 const ALLOWED_INLINE_TAGS = new Set(['a', 'em', 'strong', 'b', 'i', 'br']);
 const ARBRE_STAMP_SOURCES = [
-  'data/svg/trees/1296971.svg',
-  'data/svg/trees/1325107.svg',
-  'data/svg/trees/1502199.svg'
+  'data/svg/trees/Recurso 3.svg',
+  'data/svg/trees/Recurso 6.svg',
+  'data/svg/trees/Recurso 7.svg',
+  'data/svg/trees/Recurso 8.svg',
+  'data/svg/trees/Recurso 9.svg',
+  'data/svg/trees/Recurso 10.svg',
+  'data/svg/trees/Recurso 11.svg',
+  'data/svg/trees/Recurso 12.svg',
+  'data/svg/trees/Recurso 13.svg',
+  'data/svg/trees/Recurso 14.svg',
+  'data/svg/trees/Recurso 15.svg',
+  'data/svg/trees/Recurso 16.svg',
+  'data/svg/trees/Recurso 17.svg',
+  'data/svg/trees/Recurso 18.svg',
+  'data/svg/trees/Recurso 19.svg',
+  'data/svg/trees/Recurso 20.svg',
+  'data/svg/trees/Recurso 21.svg',
+  'data/svg/trees/Recurso 22.svg',
+  'data/svg/trees/Recurso 23.svg',
+  'data/svg/trees/Recurso 24.svg',
+  'data/svg/trees/Recurso 25.svg',
+  'data/svg/trees/Recurso 26.svg',
+  'data/svg/trees/Recurso 27.svg',
+  'data/svg/trees/Recurso 28.svg',
+  'data/svg/trees/Recurso 29.svg'
 ];
 const ARBRE_STAMP_TARGET_SLUG = 'arbre';
 
@@ -29,7 +51,8 @@ const arbreStampState = {
   startedAt: 0,
   timeoutId: null,
   layer: null,
-  stampCount: 0
+  stampCount: 0,
+  sourceIndex: 0
 };
 
 // === DOM references ===
@@ -280,6 +303,7 @@ function clearArbreStamps() {
   const layer = ensureArbreStampLayer();
   layer.innerHTML = '';
   arbreStampState.stampCount = 0;
+  arbreStampState.sourceIndex = 0;
 }
 
 function getArbreStampDelayMs(elapsedMs) {
@@ -295,16 +319,15 @@ function spawnArbreStamp() {
   const stamp = document.createElement('img');
 
   stamp.className = 'tree-stamp';
-  stamp.src = resolveAsset(randomChoice(ARBRE_STAMP_SOURCES));
+  stamp.src = resolveAsset(ARBRE_STAMP_SOURCES[arbreStampState.sourceIndex % ARBRE_STAMP_SOURCES.length]);
+  arbreStampState.sourceIndex += 1;
   stamp.alt = '';
   stamp.setAttribute('aria-hidden', 'true');
 
-  const width = 90 + Math.random() * 100; // half-size: 90-190px
   const left = Math.random() * 100;
   const top = Math.random() * 100;
   const hue = 105;
 
-  stamp.style.width = `${width.toFixed(1)}px`;
   stamp.style.left = `${left.toFixed(2)}vw`;
   stamp.style.top = `${top.toFixed(2)}vh`;
   stamp.style.transform = 'translate(-50%, -50%)';
@@ -327,10 +350,46 @@ function scheduleNextArbreStamp() {
   }, delayMs);
 }
 
+function clearDigHoles() {
+  const layer = ensureArbreStampLayer();
+  layer.querySelectorAll('.tree-stamp.dug').forEach(stamp => {
+    stamp.classList.remove('dug');
+    stamp.style.removeProperty('--hole-x');
+    stamp.style.removeProperty('--hole-y');
+  });
+}
+
+function digTreesAtPointer(clientX, clientY) {
+  const layer = ensureArbreStampLayer();
+  layer.querySelectorAll('.tree-stamp').forEach(stamp => {
+    const rect = stamp.getBoundingClientRect();
+    const isInside =
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom;
+
+    if (!isInside) {
+      stamp.classList.remove('dug');
+      return;
+    }
+
+    const holeX = ((clientX - rect.left) / rect.width) * 100;
+    const holeY = ((clientY - rect.top) / rect.height) * 100;
+    stamp.style.setProperty('--hole-x', `${holeX.toFixed(2)}%`);
+    stamp.style.setProperty('--hole-y', `${holeY.toFixed(2)}%`);
+    stamp.classList.add('dug');
+  });
+}
+
 function startArbreStamping() {
   if (arbreStampState.active) return;
   arbreStampState.active = true;
   arbreStampState.startedAt = performance.now();
+  arbreStampState.digHandler = (event) => {
+    digTreesAtPointer(event.clientX, event.clientY);
+  };
+  document.addEventListener('mousemove', arbreStampState.digHandler);
   scheduleNextArbreStamp();
 }
 
@@ -340,6 +399,11 @@ function stopArbreStamping() {
     window.clearTimeout(arbreStampState.timeoutId);
     arbreStampState.timeoutId = null;
   }
+  if (arbreStampState.digHandler) {
+    document.removeEventListener('mousemove', arbreStampState.digHandler);
+    arbreStampState.digHandler = null;
+  }
+  clearDigHoles();
   clearArbreStamps();
 }
 
