@@ -97,6 +97,13 @@ const gdePaintState = {
   layer: null,
   cursorEl: null,
   moveHandler: null,
+  touchStartHandler: null,
+  touchMoveHandler: null,
+  autoDrawFrameId: null,
+  autoX: null,
+  autoY: null,
+  autoVX: 0,
+  autoVY: 0,
   lastX: null,
   lastY: null,
   drawnKeys: new Set()
@@ -1221,6 +1228,64 @@ function clearGdePainting() {
   gdePaintState.lastY = null;
 }
 
+function isTouchLikeDevice() {
+  return (
+    window.matchMedia('(pointer: coarse)').matches
+    || 'ontouchstart' in window
+    || navigator.maxTouchPoints > 0
+  );
+}
+
+function updateGdeDrawPoint(clientX, clientY, cursorEl) {
+  cursorEl.style.left = `${clientX}px`;
+  cursorEl.style.top = `${clientY}px`;
+  if (gdePaintState.lastX === null || gdePaintState.lastY === null) {
+    drawGdePixel(clientX, clientY);
+  } else {
+    drawGdeLine(gdePaintState.lastX, gdePaintState.lastY, clientX, clientY);
+  }
+  gdePaintState.lastX = clientX;
+  gdePaintState.lastY = clientY;
+}
+
+function startGdeAutoDraw(cursorEl) {
+  const pad = 10;
+  gdePaintState.autoX = window.innerWidth * 0.5;
+  gdePaintState.autoY = window.innerHeight * 0.58;
+  gdePaintState.autoVX = (Math.random() > 0.5 ? 1 : -1) * (1.6 + Math.random() * 1.4);
+  gdePaintState.autoVY = (Math.random() > 0.5 ? 1 : -1) * (1.2 + Math.random() * 1.2);
+
+  const tick = () => {
+    if (!gdePaintState.active) return;
+
+    const maxX = Math.max(pad + 1, window.innerWidth - pad);
+    const maxY = Math.max(pad + 1, window.innerHeight - pad);
+
+    let nextX = (gdePaintState.autoX ?? window.innerWidth * 0.5) + gdePaintState.autoVX;
+    let nextY = (gdePaintState.autoY ?? window.innerHeight * 0.5) + gdePaintState.autoVY;
+
+    if (nextX <= pad || nextX >= maxX) {
+      gdePaintState.autoVX *= -1;
+      nextX = Math.min(maxX, Math.max(pad, nextX));
+    }
+    if (nextY <= pad || nextY >= maxY) {
+      gdePaintState.autoVY *= -1;
+      nextY = Math.min(maxY, Math.max(pad, nextY));
+    }
+
+    gdePaintState.autoX = nextX;
+    gdePaintState.autoY = nextY;
+    updateGdeDrawPoint(nextX, nextY, cursorEl);
+
+    gdePaintState.autoDrawFrameId = window.requestAnimationFrame(tick);
+  };
+
+  if (gdePaintState.autoDrawFrameId) {
+    window.cancelAnimationFrame(gdePaintState.autoDrawFrameId);
+  }
+  gdePaintState.autoDrawFrameId = window.requestAnimationFrame(tick);
+}
+
 function startGdePaintMode() {
   if (gdePaintState.active) return;
   gdePaintState.active = true;
@@ -1229,17 +1294,31 @@ function startGdePaintMode() {
   const cursorEl = ensureGdeCursorElement();
   cursorEl.style.display = 'block';
   gdePaintState.moveHandler = (event) => {
-    cursorEl.style.left = `${event.clientX}px`;
-    cursorEl.style.top = `${event.clientY}px`;
-    if (gdePaintState.lastX === null || gdePaintState.lastY === null) {
-      drawGdePixel(event.clientX, event.clientY);
-    } else {
-      drawGdeLine(gdePaintState.lastX, gdePaintState.lastY, event.clientX, event.clientY);
-    }
-    gdePaintState.lastX = event.clientX;
-    gdePaintState.lastY = event.clientY;
+    updateGdeDrawPoint(event.clientX, event.clientY, cursorEl);
   };
+
+  gdePaintState.touchStartHandler = (event) => {
+    const touch = event.touches && event.touches[0];
+    if (!touch) return;
+    updateGdeDrawPoint(touch.clientX, touch.clientY, cursorEl);
+  };
+
+  gdePaintState.touchMoveHandler = (event) => {
+    const touch = event.touches && event.touches[0];
+    if (!touch) return;
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+    updateGdeDrawPoint(touch.clientX, touch.clientY, cursorEl);
+  };
+
   document.addEventListener('mousemove', gdePaintState.moveHandler);
+  document.addEventListener('touchstart', gdePaintState.touchStartHandler, { passive: false });
+  document.addEventListener('touchmove', gdePaintState.touchMoveHandler, { passive: false });
+
+  if (isTouchLikeDevice()) {
+    startGdeAutoDraw(cursorEl);
+  }
 }
 
 function stopGdePaintMode(clear = true) {
@@ -1248,6 +1327,22 @@ function stopGdePaintMode(clear = true) {
     document.removeEventListener('mousemove', gdePaintState.moveHandler);
     gdePaintState.moveHandler = null;
   }
+  if (gdePaintState.touchStartHandler) {
+    document.removeEventListener('touchstart', gdePaintState.touchStartHandler);
+    gdePaintState.touchStartHandler = null;
+  }
+  if (gdePaintState.touchMoveHandler) {
+    document.removeEventListener('touchmove', gdePaintState.touchMoveHandler);
+    gdePaintState.touchMoveHandler = null;
+  }
+  if (gdePaintState.autoDrawFrameId) {
+    window.cancelAnimationFrame(gdePaintState.autoDrawFrameId);
+    gdePaintState.autoDrawFrameId = null;
+  }
+  gdePaintState.autoX = null;
+  gdePaintState.autoY = null;
+  gdePaintState.autoVX = 0;
+  gdePaintState.autoVY = 0;
   document.body.classList.remove('gde-paint-mode');
   if (gdePaintState.cursorEl) {
     gdePaintState.cursorEl.style.display = 'none';
@@ -1354,6 +1449,27 @@ function showBurnedFireSpread() {
     }, delay);
     burnSpreadState.timeoutIds.push(waveId);
   }
+
+  // Final sweep to guarantee full viewport coverage, including edges.
+  const finalSweepDelay = waveCount * 260 + 180;
+  const sweepId = window.setTimeout(() => {
+    const step = 130;
+    for (let y = 8; y <= window.innerHeight - 8; y += step) {
+      for (let x = 8; x <= window.innerWidth - 8; x += step) {
+        const jitterX = (Math.random() - 0.5) * 28;
+        const jitterY = (Math.random() - 0.5) * 28;
+        const size = 110 + Math.random() * 70;
+        const duration = 1200 + Math.random() * 900;
+        spawn(
+          Math.min(window.innerWidth - 8, Math.max(8, x + jitterX)),
+          Math.min(window.innerHeight - 8, Math.max(8, y + jitterY)),
+          size,
+          duration
+        );
+      }
+    }
+  }, finalSweepDelay);
+  burnSpreadState.timeoutIds.push(sweepId);
 }
 
 function handleSlideTextClick(event) {
