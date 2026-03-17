@@ -54,6 +54,9 @@ const godBlueState = {
 const burnSpreadState = {
   timeoutIds: []
 };
+const shineSpreadState = {
+  timeoutIds: []
+};
 const ARBRE_STAMP_SOURCES = [
   'data/svg/trees/Recurso 3.svg',
   'data/svg/trees/Recurso 6.svg',
@@ -1357,7 +1360,10 @@ function syncGdePaintMode(slug) {
 }
 
 function showShineGifNearTrigger(trigger, gifSrc = FOC_SHINE_GIF_SRC) {
-  document.querySelectorAll('.shine-pop.shine-pop-floating').forEach(node => node.remove());
+  shineSpreadState.timeoutIds.forEach(id => window.clearTimeout(id));
+  shineSpreadState.timeoutIds = [];
+  document.querySelectorAll('.shine-pop.shine-pop-floating:not(.burned-fire-pop)').forEach(node => node.remove());
+  const edgeBleed = 140;
 
   const spawn = (x, y, size, duration) => {
     const img = document.createElement('img');
@@ -1371,7 +1377,8 @@ function showShineGifNearTrigger(trigger, gifSrc = FOC_SHINE_GIF_SRC) {
     img.style.height = `${size.toFixed(0)}px`;
     img.style.animationDuration = `${duration}ms`;
     document.body.appendChild(img);
-    window.setTimeout(() => img.remove(), duration);
+    const removeId = window.setTimeout(() => img.remove(), duration + 40);
+    shineSpreadState.timeoutIds.push(removeId);
   };
 
   const rect = trigger.getBoundingClientRect();
@@ -1381,17 +1388,58 @@ function showShineGifNearTrigger(trigger, gifSrc = FOC_SHINE_GIF_SRC) {
   // Main bigger gif near the clicked word.
   spawn(centerX, centerY - 70, 150, 1300);
 
-  // Replicate gifs across the whole viewport for a quick visual burst.
-  const cloneCount = 24;
-  const pad = 36;
-  for (let i = 0; i < cloneCount; i += 1) {
-    const x = pad + Math.random() * Math.max(1, window.innerWidth - pad * 2);
-    const y = pad + Math.random() * Math.max(1, window.innerHeight - pad * 2);
-    const size = 120 + Math.random() * 65;
-    const duration = 900 + Math.random() * 500;
-    const delay = Math.random() * 140;
-    window.setTimeout(() => spawn(x, y, size, duration), delay);
+  // Spread shine across the whole viewport with edge bleed.
+  const waveCount = 8;
+  const maxRadius = Math.hypot(window.innerWidth, window.innerHeight);
+
+  for (let wave = 0; wave < waveCount; wave += 1) {
+    const delay = wave * 180;
+    const count = Math.min(10 + wave * 8, 84);
+    const radiusBase = (maxRadius * (wave + 1)) / waveCount;
+    const globalCount = 10 + wave * 4;
+
+    const waveId = window.setTimeout(() => {
+      for (let i = 0; i < count; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.max(0, radiusBase + (Math.random() - 0.5) * 150);
+        const x = Math.min(window.innerWidth + edgeBleed, Math.max(-edgeBleed, centerX + Math.cos(angle) * radius));
+        const y = Math.min(window.innerHeight + edgeBleed, Math.max(-edgeBleed, centerY + Math.sin(angle) * radius));
+        const size = 105 + Math.random() * 70;
+        const duration = 1000 + Math.random() * 900;
+        spawn(x, y, size, duration);
+      }
+
+      for (let i = 0; i < globalCount; i += 1) {
+        const x = -edgeBleed + Math.random() * Math.max(1, window.innerWidth + edgeBleed * 2);
+        const y = -edgeBleed + Math.random() * Math.max(1, window.innerHeight + edgeBleed * 2);
+        const size = 95 + Math.random() * 80;
+        const duration = 900 + Math.random() * 1000;
+        spawn(x, y, size, duration);
+      }
+    }, delay);
+    shineSpreadState.timeoutIds.push(waveId);
   }
+
+  // Deterministic full-screen sweep to remove any remaining visual gaps.
+  const finalSweepDelay = waveCount * 180 + 120;
+  const sweepId = window.setTimeout(() => {
+    const step = 120;
+    for (let y = -edgeBleed; y <= window.innerHeight + edgeBleed; y += step) {
+      for (let x = -edgeBleed; x <= window.innerWidth + edgeBleed; x += step) {
+        const jitterX = (Math.random() - 0.5) * 26;
+        const jitterY = (Math.random() - 0.5) * 26;
+        const size = 105 + Math.random() * 65;
+        const duration = 900 + Math.random() * 900;
+        spawn(
+          Math.min(window.innerWidth + edgeBleed, Math.max(-edgeBleed, x + jitterX)),
+          Math.min(window.innerHeight + edgeBleed, Math.max(-edgeBleed, y + jitterY)),
+          size,
+          duration
+        );
+      }
+    }
+  }, finalSweepDelay);
+  shineSpreadState.timeoutIds.push(sweepId);
 }
 
 function showBurnedFireSpread() {
@@ -2199,8 +2247,6 @@ async function init() {
     setSidebarExpanded(!el.sidebar.classList.contains('expanded'));
   };
   el.sidebarToggle.addEventListener('click', onSidebarToggle);
-  el.sidebarToggle.addEventListener('pointerup', onSidebarToggle);
-  el.sidebarToggle.addEventListener('touchend', onSidebarToggle, { passive: false });
 
   // Image click → zoom
   el.slideImage.addEventListener('click', (e) => {
