@@ -1398,6 +1398,7 @@ function showBurnedFireSpread() {
   burnSpreadState.timeoutIds.forEach(id => window.clearTimeout(id));
   burnSpreadState.timeoutIds = [];
   document.querySelectorAll('.burned-fire-pop').forEach(node => node.remove());
+  const edgeBleed = 140;
 
   const spawn = (x, y, size, duration) => {
     const img = document.createElement('img');
@@ -1415,9 +1416,8 @@ function showBurnedFireSpread() {
     burnSpreadState.timeoutIds.push(removeId);
   };
 
-  const pad = 18;
-  const startX = pad + 64;
-  const startY = window.innerHeight - pad - 64;
+  const startX = 64;
+  const startY = window.innerHeight - 64;
   const waveCount = 9;
   const maxRadius = Math.hypot(window.innerWidth, window.innerHeight);
 
@@ -1432,16 +1432,16 @@ function showBurnedFireSpread() {
       for (let i = 0; i < count; i += 1) {
         const angle = Math.random() * Math.PI * 2;
         const radius = Math.max(0, radiusBase + (Math.random() - 0.5) * 160);
-        const x = Math.min(window.innerWidth - 8, Math.max(8, startX + Math.cos(angle) * radius));
-        const y = Math.min(window.innerHeight - 8, Math.max(8, startY + Math.sin(angle) * radius));
+        const x = Math.min(window.innerWidth + edgeBleed, Math.max(-edgeBleed, startX + Math.cos(angle) * radius));
+        const y = Math.min(window.innerHeight + edgeBleed, Math.max(-edgeBleed, startY + Math.sin(angle) * radius));
         const size = 120 + Math.random() * 80;
         const duration = 1600 + Math.random() * 1200;
         spawn(x, y, size, duration);
       }
 
       for (let i = 0; i < globalCount; i += 1) {
-        const x = 8 + Math.random() * Math.max(1, window.innerWidth - 16);
-        const y = 8 + Math.random() * Math.max(1, window.innerHeight - 16);
+        const x = -edgeBleed + Math.random() * Math.max(1, window.innerWidth + edgeBleed * 2);
+        const y = -edgeBleed + Math.random() * Math.max(1, window.innerHeight + edgeBleed * 2);
         const size = 100 + Math.random() * 95;
         const duration = 1500 + Math.random() * 1300;
         spawn(x, y, size, duration);
@@ -1453,16 +1453,16 @@ function showBurnedFireSpread() {
   // Final sweep to guarantee full viewport coverage, including edges.
   const finalSweepDelay = waveCount * 260 + 180;
   const sweepId = window.setTimeout(() => {
-    const step = 130;
-    for (let y = 8; y <= window.innerHeight - 8; y += step) {
-      for (let x = 8; x <= window.innerWidth - 8; x += step) {
+    const step = 120;
+    for (let y = -edgeBleed; y <= window.innerHeight + edgeBleed; y += step) {
+      for (let x = -edgeBleed; x <= window.innerWidth + edgeBleed; x += step) {
         const jitterX = (Math.random() - 0.5) * 28;
         const jitterY = (Math.random() - 0.5) * 28;
         const size = 110 + Math.random() * 70;
         const duration = 1200 + Math.random() * 900;
         spawn(
-          Math.min(window.innerWidth - 8, Math.max(8, x + jitterX)),
-          Math.min(window.innerHeight - 8, Math.max(8, y + jitterY)),
+          Math.min(window.innerWidth + edgeBleed, Math.max(-edgeBleed, x + jitterX)),
+          Math.min(window.innerHeight + edgeBleed, Math.max(-edgeBleed, y + jitterY)),
           size,
           duration
         );
@@ -2191,9 +2191,16 @@ async function init() {
 
   // Sidebar toggle (mobile expand/collapse)
   setSidebarExpanded(el.sidebar.classList.contains('expanded'));
-  el.sidebarToggle.addEventListener('click', () => {
+  const onSidebarToggle = (event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     setSidebarExpanded(!el.sidebar.classList.contains('expanded'));
-  });
+  };
+  el.sidebarToggle.addEventListener('click', onSidebarToggle);
+  el.sidebarToggle.addEventListener('pointerup', onSidebarToggle);
+  el.sidebarToggle.addEventListener('touchend', onSidebarToggle, { passive: false });
 
   // Image click → zoom
   el.slideImage.addEventListener('click', (e) => {

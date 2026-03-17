@@ -136,6 +136,7 @@ body {
   align-items: center;
   gap: 0.25rem;
   font-size: 1rem;
+  color: #000 !important;
 }
 
 .lang-btn, .lang-btn-mobile {
@@ -148,7 +149,7 @@ body {
 }
 
 .lang-btn.active, .lang-btn-mobile.active {
-  font-weight: 700;
+  font-weight: 700 !important;
 }
 
 .lang-btn:hover, .lang-btn-mobile:hover {
@@ -160,12 +161,12 @@ body {
   font-size: 1rem;
   font-weight: 400;
   user-select: none;
+  color: #000 !important;
 }
 
 .lang-btn.god-blue-menu,
-.lang-btn-mobile.god-blue-menu,
 .lang-btn-mobile.god-blue-menu {
-  color: var(--text-color);
+  color: #000 !important;
   font-weight: 400;
   text-decoration: none !important;
 }
@@ -809,6 +810,7 @@ body.gde-paint-mode * {
     line-height: 1;
     color: var(--muted-color);
     z-index: 501;
+    touch-action: manipulation;
   }
 
   .sidebar-toggle .toggle-icon {
