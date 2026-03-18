@@ -17,7 +17,7 @@ const SEO = {
 
 const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:']);
 const ALLOWED_INLINE_TAGS = new Set(['a', 'em', 'strong', 'b', 'i', 'br']);
-const FOC_SHINE_GIF_SRC = 'data/eastereggs/ani-pastel-sparkles.gif';
+const FOC_SHINE_GIF_SRC = 'data/eastereggs/fireworks.gif';
 const FOC_BURNED_GIF_SRC = 'data/eastereggs/llama2.gif';
 const GDE_PENCIL_CURSOR_SRC = 'data/eastereggs/Recurso 1.svg';
 const ABOUT_FLIGHT_IMG_SRC = 'data/eastereggs/flight.jpg';
@@ -45,6 +45,8 @@ const ncbTattooState = {
 
 const godBlueState = {
   targets: [],
+  menuAllTargets: [],
+  textTargetCount: 0,
   revealOrder: [],
   revealedCount: 0,
   clickCount: 0,
@@ -777,6 +779,8 @@ function resetGodBlueState() {
     elm.classList.remove('god-blue-trigger', 'god-blue-menu');
   });
   godBlueState.targets = [];
+  godBlueState.menuAllTargets = [];
+  godBlueState.textTargetCount = 0;
   godBlueState.revealOrder = [];
   godBlueState.revealedCount = 0;
   godBlueState.clickCount = 0;
@@ -789,9 +793,9 @@ function resetGodBlueState() {
 }
 
 function applyGodBlueState() {
-  const { targets, revealOrder, revealedCount } = godBlueState;
+  const { targets, revealOrder, revealedCount, textTargetCount } = godBlueState;
   const activeSet = new Set(revealOrder.slice(0, revealedCount));
-  targets.forEach((span, i) => {
+  targets.slice(0, textTargetCount).forEach((span, i) => {
     const isActive = activeSet.has(i);
     span.classList.toggle('god-blue-trigger', isActive);
   });
@@ -799,6 +803,14 @@ function applyGodBlueState() {
 
 function revealNextGodBlueWord() {
   if (!godBlueState.targets.length) return;
+
+  // Menu+lang+arrows all go blue at once, then immediately to image phase.
+  if (godBlueState.phase === 'menu') {
+    godBlueState.menuAllTargets.forEach(elm => elm.classList.add('god-blue-trigger'));
+    godBlueState.phase = 'image';
+    document.body.classList.add('god-blue-image');
+    return;
+  }
 
   if (godBlueState.phase === 'image') {
     godBlueState.phase = 'complete';
@@ -808,29 +820,30 @@ function revealNextGodBlueWord() {
 
   if (godBlueState.phase === 'complete') {
     godBlueState.phase = 'words';
-    godBlueState.revealedCount = Math.min(1, godBlueState.targets.length);
+    godBlueState.revealedCount = Math.min(1, godBlueState.textTargetCount);
     godBlueState.clickCount = 0;
     document.body.classList.remove('god-blue-complete', 'god-blue-image');
+    godBlueState.menuAllTargets.forEach(elm => elm.classList.remove('god-blue-trigger'));
     applyGodBlueState();
     return;
   }
 
-  if (godBlueState.revealedCount >= godBlueState.targets.length) {
-    godBlueState.phase = 'image';
-    document.body.classList.add('god-blue-image');
+  // phase === 'words'
+  if (godBlueState.revealedCount >= godBlueState.textTargetCount) {
+    godBlueState.phase = 'menu';
+    revealNextGodBlueWord();
     return;
   }
 
   godBlueState.clickCount += 1;
   godBlueState.revealedCount = Math.min(
-    godBlueState.targets.length,
+    godBlueState.textTargetCount,
     godBlueState.revealedCount + godBlueState.clickCount
   );
   applyGodBlueState();
 
-  if (godBlueState.revealedCount >= godBlueState.targets.length) {
-    godBlueState.phase = 'image';
-    document.body.classList.add('god-blue-image');
+  if (godBlueState.revealedCount >= godBlueState.textTargetCount) {
+    godBlueState.phase = 'menu';
   }
 }
 
@@ -902,7 +915,8 @@ function enhanceGodBlueWords(container, slug) {
     btn.classList.add('god-blue-menu');
   });
 
-  const targets = [...textTargets, ...menuTargets, ...langTargets, ...navArrowTargets];
+  const menuAllTargets = [...menuTargets, ...langTargets, ...navArrowTargets];
+  const targets = [...textTargets, ...menuAllTargets];
 
   if (!targets.length) return;
 
@@ -946,19 +960,14 @@ function enhanceGodBlueWords(container, slug) {
     [textIndices[i], textIndices[j]] = [textIndices[j], textIndices[i]];
   }
 
-  const menuOffset = textTargets.length;
-  const menuLangAndArrowCount = menuTargets.length + langTargets.length + navArrowTargets.length;
-  const menuIndices = Array.from({ length: menuLangAndArrowCount }, (_, i) => menuOffset + i);
-  for (let i = menuIndices.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [menuIndices[i], menuIndices[j]] = [menuIndices[j], menuIndices[i]];
-  }
-
+  // Menu/lang/arrows reveal all at once — no individual indices needed.
   const revealOrder = secondIndex >= 0
-    ? [firstIndex, secondIndex, ...textIndices, ...menuIndices]
-    : [firstIndex, ...textIndices, ...menuIndices];
+    ? [firstIndex, secondIndex, ...textIndices]
+    : [firstIndex, ...textIndices];
 
   godBlueState.targets = targets;
+  godBlueState.menuAllTargets = menuAllTargets;
+  godBlueState.textTargetCount = textTargets.length;
   godBlueState.revealOrder = revealOrder;
   godBlueState.revealedCount = 1;
   godBlueState.clickCount = 0;
@@ -1318,10 +1327,6 @@ function startGdePaintMode() {
   document.addEventListener('mousemove', gdePaintState.moveHandler);
   document.addEventListener('touchstart', gdePaintState.touchStartHandler, { passive: false });
   document.addEventListener('touchmove', gdePaintState.touchMoveHandler, { passive: false });
-
-  if (isTouchLikeDevice()) {
-    startGdeAutoDraw(cursorEl);
-  }
 }
 
 function stopGdePaintMode(clear = true) {
@@ -1388,15 +1393,15 @@ function showShineGifNearTrigger(trigger, gifSrc = FOC_SHINE_GIF_SRC) {
   // Main bigger gif near the clicked word.
   spawn(centerX, centerY - 70, 150, 1300);
 
-  // Spread shine across the whole viewport with edge bleed.
-  const waveCount = 8;
+  // Spread shine across the viewport — lightweight (3 waves).
+  const waveCount = 3;
   const maxRadius = Math.hypot(window.innerWidth, window.innerHeight);
 
   for (let wave = 0; wave < waveCount; wave += 1) {
-    const delay = wave * 180;
-    const count = Math.min(10 + wave * 8, 84);
+    const delay = wave * 220;
+    const count = Math.min(4 + wave * 3, 12);
     const radiusBase = (maxRadius * (wave + 1)) / waveCount;
-    const globalCount = 10 + wave * 4;
+    const globalCount = 4 + wave * 2;
 
     const waveId = window.setTimeout(() => {
       for (let i = 0; i < count; i += 1) {
@@ -1404,42 +1409,21 @@ function showShineGifNearTrigger(trigger, gifSrc = FOC_SHINE_GIF_SRC) {
         const radius = Math.max(0, radiusBase + (Math.random() - 0.5) * 150);
         const x = Math.min(window.innerWidth + edgeBleed, Math.max(-edgeBleed, centerX + Math.cos(angle) * radius));
         const y = Math.min(window.innerHeight + edgeBleed, Math.max(-edgeBleed, centerY + Math.sin(angle) * radius));
-        const size = 105 + Math.random() * 70;
-        const duration = 1000 + Math.random() * 900;
+        const size = 110 + Math.random() * 60;
+        const duration = 1000 + Math.random() * 800;
         spawn(x, y, size, duration);
       }
 
       for (let i = 0; i < globalCount; i += 1) {
         const x = -edgeBleed + Math.random() * Math.max(1, window.innerWidth + edgeBleed * 2);
         const y = -edgeBleed + Math.random() * Math.max(1, window.innerHeight + edgeBleed * 2);
-        const size = 95 + Math.random() * 80;
-        const duration = 900 + Math.random() * 1000;
+        const size = 100 + Math.random() * 70;
+        const duration = 900 + Math.random() * 800;
         spawn(x, y, size, duration);
       }
     }, delay);
     shineSpreadState.timeoutIds.push(waveId);
   }
-
-  // Deterministic full-screen sweep to remove any remaining visual gaps.
-  const finalSweepDelay = waveCount * 180 + 120;
-  const sweepId = window.setTimeout(() => {
-    const step = 120;
-    for (let y = -edgeBleed; y <= window.innerHeight + edgeBleed; y += step) {
-      for (let x = -edgeBleed; x <= window.innerWidth + edgeBleed; x += step) {
-        const jitterX = (Math.random() - 0.5) * 26;
-        const jitterY = (Math.random() - 0.5) * 26;
-        const size = 105 + Math.random() * 65;
-        const duration = 900 + Math.random() * 900;
-        spawn(
-          Math.min(window.innerWidth + edgeBleed, Math.max(-edgeBleed, x + jitterX)),
-          Math.min(window.innerHeight + edgeBleed, Math.max(-edgeBleed, y + jitterY)),
-          size,
-          duration
-        );
-      }
-    }
-  }, finalSweepDelay);
-  shineSpreadState.timeoutIds.push(sweepId);
 }
 
 function showBurnedFireSpread() {
@@ -1466,15 +1450,15 @@ function showBurnedFireSpread() {
 
   const startX = 64;
   const startY = window.innerHeight - 64;
-  const waveCount = 9;
+  const waveCount = 4;
   const maxRadius = Math.hypot(window.innerWidth, window.innerHeight);
 
   for (let wave = 0; wave < waveCount; wave += 1) {
-    const delay = wave * 260;
-    const count = Math.min(1 + Math.floor((wave * wave) / 1.1), 75);
+    const delay = wave * 300;
+    const count = Math.min(3 + wave * 3, 12);
     const radiusBase = (maxRadius * (wave + 1)) / waveCount;
     const progress = (wave + 1) / waveCount;
-    const globalCount = Math.floor(8 + progress * 40);
+    const globalCount = Math.floor(4 + progress * 8);
 
     const waveId = window.setTimeout(() => {
       for (let i = 0; i < count; i += 1) {
@@ -1498,26 +1482,6 @@ function showBurnedFireSpread() {
     burnSpreadState.timeoutIds.push(waveId);
   }
 
-  // Final sweep to guarantee full viewport coverage, including edges.
-  const finalSweepDelay = waveCount * 260 + 180;
-  const sweepId = window.setTimeout(() => {
-    const step = 120;
-    for (let y = -edgeBleed; y <= window.innerHeight + edgeBleed; y += step) {
-      for (let x = -edgeBleed; x <= window.innerWidth + edgeBleed; x += step) {
-        const jitterX = (Math.random() - 0.5) * 28;
-        const jitterY = (Math.random() - 0.5) * 28;
-        const size = 110 + Math.random() * 70;
-        const duration = 1200 + Math.random() * 900;
-        spawn(
-          Math.min(window.innerWidth + edgeBleed, Math.max(-edgeBleed, x + jitterX)),
-          Math.min(window.innerHeight + edgeBleed, Math.max(-edgeBleed, y + jitterY)),
-          size,
-          duration
-        );
-      }
-    }
-  }, finalSweepDelay);
-  burnSpreadState.timeoutIds.push(sweepId);
 }
 
 function handleSlideTextClick(event) {
