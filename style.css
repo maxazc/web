@@ -219,6 +219,7 @@ body.god-blue-complete .lang-btn-mobile.active {
   z-index: 180;
   pointer-events: none;
   overflow: hidden;
+  contain: layout paint;
 }
 
 body.arbre-stamp-active #tree-stamp-layer {
@@ -587,6 +588,7 @@ body.carapils-curtain-active .god-blue-trigger {
   z-index: 170;
   pointer-events: none;
   overflow: hidden;
+  contain: layout paint;
 }
 
 .gde-paint-pixel {
@@ -624,6 +626,7 @@ body.gde-paint-mode * {
   position: fixed;
   z-index: 195;
   transform: translate(-50%, -50%);
+  will-change: transform, opacity;
 }
 
 .about-photo-pop {

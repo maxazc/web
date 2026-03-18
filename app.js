@@ -1888,7 +1888,11 @@ function updateActiveProject() {
   const activeLink = links[state.currentProjectIndex];
   if (activeLink) {
     moveNavIndicator(activeLink);
-    activeLink.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const navRect = el.projectNav.getBoundingClientRect();
+    const linkRect = activeLink.getBoundingClientRect();
+    if (linkRect.top < navRect.top || linkRect.bottom > navRect.bottom) {
+      activeLink.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
   }
 }
 
@@ -2208,6 +2212,7 @@ async function init() {
   syncLangButtons();
   initProjectNav();
   renderSlide(false);
+  preloadEasterEggAssets();
 
   // Desktop controls
   el.prevBtn.addEventListener('click', goPrev);
@@ -2243,13 +2248,45 @@ async function init() {
 
   // Keep indicator synced when nav scrolls (mobile)
   el.projectNav.addEventListener('click', handleProjectNavClick, true);
-  el.projectNav.addEventListener('scroll', () => {
-    syncNavIndicator();
-  });
+  let navSyncPending = false;
+  const throttledSyncNavIndicator = () => {
+    if (navSyncPending) return;
+    navSyncPending = true;
+    requestAnimationFrame(() => {
+      syncNavIndicator();
+      navSyncPending = false;
+    });
+  };
+  el.projectNav.addEventListener('scroll', throttledSyncNavIndicator);
 
   // Keep indicator aligned after viewport changes
-  window.addEventListener('resize', syncNavIndicator);
-  window.addEventListener('orientationchange', syncNavIndicator);
+  window.addEventListener('resize', throttledSyncNavIndicator);
+  window.addEventListener('orientationchange', throttledSyncNavIndicator);
+}
+
+function preloadEasterEggAssets() {
+  const idleCb = typeof requestIdleCallback !== 'undefined'
+    ? requestIdleCallback
+    : (fn) => setTimeout(fn, 250);
+  const sources = [
+    FOC_SHINE_GIF_SRC,
+    FOC_BURNED_GIF_SRC,
+    GDE_PENCIL_CURSOR_SRC,
+    ABOUT_FLIGHT_IMG_SRC,
+    ABOUT_METRO_IMG_SRC,
+    ABOUT_ARBORICULTURE_IMG_SRC,
+    NCB_TATTOO_IMG_SRC,
+    CARAPILS_CURTAIN_IMG_SRC,
+    ...ARBRE_STAMP_SOURCES.slice(0, 6)
+  ];
+  let i = 0;
+  const loadNext = () => {
+    if (i >= sources.length) return;
+    const img = new Image();
+    img.src = resolveAsset(sources[i++]);
+    img.onload = img.onerror = () => idleCb(loadNext);
+  };
+  idleCb(loadNext);
 }
 
 if (document.readyState === 'loading') {
