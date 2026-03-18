@@ -49,7 +49,7 @@ const godBlueState = {
   textTargetCount: 0,
   revealOrder: [],
   revealedCount: 0,
-  clickCount: 0,
+  wordStep: 0,
   phase: 'words',
   imagePhaseTimeoutId: null
 };
@@ -783,7 +783,7 @@ function resetGodBlueState() {
   godBlueState.textTargetCount = 0;
   godBlueState.revealOrder = [];
   godBlueState.revealedCount = 0;
-  godBlueState.clickCount = 0;
+  godBlueState.wordStep = 0;
   godBlueState.phase = 'words';
   if (godBlueState.imagePhaseTimeoutId) {
     window.clearTimeout(godBlueState.imagePhaseTimeoutId);
@@ -820,26 +820,30 @@ function revealNextGodBlueWord() {
 
   if (godBlueState.phase === 'complete') {
     godBlueState.phase = 'words';
+    godBlueState.wordStep = 1;
     godBlueState.revealedCount = Math.min(1, godBlueState.textTargetCount);
-    godBlueState.clickCount = 0;
     document.body.classList.remove('god-blue-complete', 'god-blue-image');
     godBlueState.menuAllTargets.forEach(elm => elm.classList.remove('god-blue-trigger'));
     applyGodBlueState();
     return;
   }
 
-  // phase === 'words'
-  if (godBlueState.revealedCount >= godBlueState.textTargetCount) {
-    godBlueState.phase = 'menu';
-    revealNextGodBlueWord();
-    return;
+  // phase === 'words' — 4 fixed steps:
+  // 0 → first word (ambition/ambició)
+  // 1 → second word (aspiration/aspiracionalitat)
+  // 2 → half of all text words
+  // 3 → all text words → next click triggers menu phase
+  const { wordStep, textTargetCount } = godBlueState;
+  if (wordStep === 0) {
+    godBlueState.revealedCount = Math.min(1, textTargetCount);
+  } else if (wordStep === 1) {
+    godBlueState.revealedCount = Math.min(2, textTargetCount);
+  } else if (wordStep === 2) {
+    godBlueState.revealedCount = Math.ceil(textTargetCount / 2);
+  } else {
+    godBlueState.revealedCount = textTargetCount;
   }
-
-  godBlueState.clickCount += 1;
-  godBlueState.revealedCount = Math.min(
-    godBlueState.textTargetCount,
-    godBlueState.revealedCount + godBlueState.clickCount
-  );
+  godBlueState.wordStep += 1;
   applyGodBlueState();
 
   if (godBlueState.revealedCount >= godBlueState.textTargetCount) {
