@@ -172,11 +172,18 @@ body {
 }
 
 .lang-btn.god-blue-menu.god-blue-trigger,
-.lang-btn-mobile.god-blue-menu.god-blue-trigger,
+.lang-btn-mobile.god-blue-menu.god-blue-trigger {
+  color: LinkText !important;
+}
+
+.lang-sep.god-blue-trigger {
+  color: LinkText !important;
+}
+
 body.god-blue-complete .lang-btn,
 body.god-blue-complete .lang-btn-mobile,
 body.god-blue-complete .lang-sep {
-  color: #000 !important;
+  color: LinkText !important;
 }
 
 .lang-btn.active,
@@ -464,6 +471,22 @@ body.god-blue-complete a:hover,
 body.god-blue-complete a:active {
   color: LinkText !important;
   border-color: LinkText !important;
+}
+
+/* GOD "altres coses" / "other things" link — only visible when screen is fully blue */
+.god-others-link {
+  color: inherit !important;
+  text-decoration: none !important;
+  pointer-events: none;
+  cursor: default;
+}
+
+body.god-blue-complete .god-others-link {
+  color: #fff !important;
+  text-decoration: underline !important;
+  text-underline-offset: 0.12em;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 /* Keep links above overlays only while the Cara Pils curtain is active. */

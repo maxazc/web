@@ -915,7 +915,8 @@ function enhanceGodBlueWords(container, slug) {
     btn.classList.add('god-blue-menu');
   });
 
-  const menuAllTargets = [...menuTargets, ...langTargets, ...navArrowTargets];
+  const langSepTargets = Array.from(document.querySelectorAll('.lang-sep'));
+  const menuAllTargets = [...menuTargets, ...langTargets, ...langSepTargets, ...navArrowTargets];
   const targets = [...textTargets, ...menuAllTargets];
 
   if (!targets.length) return;
@@ -1362,6 +1363,22 @@ function syncGdePaintMode(slug) {
   if (slug !== GDE_PAINT_TARGET_SLUG) {
     stopGdePaintMode(true);
   }
+}
+
+function enhanceGodOthersLink(container, slug) {
+  if (slug !== GOD_TARGET_SLUG || !container) return;
+  const phrase = state.lang === 'cat' ? 'altres coses' : 'other things';
+  const pdfUrl = '/data/top 10 slides web provisional.pdf';
+
+  replaceFirstPhraseWithNode(container, phrase, (matchedText) => {
+    const a = document.createElement('a');
+    a.href = pdfUrl;
+    a.className = 'god-others-link';
+    a.textContent = matchedText;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    return a;
+  });
 }
 
 function showShineGifNearTrigger(trigger, gifSrc = FOC_SHINE_GIF_SRC) {
@@ -1987,6 +2004,7 @@ async function renderSlide(withTransition = true) {
     enhanceCaraPilsPlayfulTrigger(el.slideText, slug);
     enhanceNcbTattooTrigger(el.slideText, slug);
     enhanceGodBlueWords(el.slideText, slug);
+    enhanceGodOthersLink(el.slideText, slug);
     if (aboutRevealState.active) {
       applyAboutRevealLinks(el.slideText, slug);
     }
