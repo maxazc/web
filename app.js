@@ -975,7 +975,7 @@ function enhanceGodBlueWords(container, slug) {
   godBlueState.textTargetCount = textTargets.length;
   godBlueState.revealOrder = revealOrder;
   godBlueState.revealedCount = 1;
-  godBlueState.clickCount = 0;
+  godBlueState.wordStep = 1;
   godBlueState.phase = 'words';
   applyGodBlueState();
 }
