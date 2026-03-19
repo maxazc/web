@@ -1245,14 +1245,6 @@ function clearGdePainting() {
   gdePaintState.lastY = null;
 }
 
-function isTouchLikeDevice() {
-  return (
-    window.matchMedia('(pointer: coarse)').matches
-    || 'ontouchstart' in window
-    || navigator.maxTouchPoints > 0
-  );
-}
-
 function updateGdeDrawPoint(clientX, clientY, cursorEl) {
   cursorEl.style.left = `${clientX}px`;
   cursorEl.style.top = `${clientY}px`;
@@ -1263,44 +1255,6 @@ function updateGdeDrawPoint(clientX, clientY, cursorEl) {
   }
   gdePaintState.lastX = clientX;
   gdePaintState.lastY = clientY;
-}
-
-function startGdeAutoDraw(cursorEl) {
-  const pad = 10;
-  gdePaintState.autoX = window.innerWidth * 0.5;
-  gdePaintState.autoY = window.innerHeight * 0.58;
-  gdePaintState.autoVX = (Math.random() > 0.5 ? 1 : -1) * (1.6 + Math.random() * 1.4);
-  gdePaintState.autoVY = (Math.random() > 0.5 ? 1 : -1) * (1.2 + Math.random() * 1.2);
-
-  const tick = () => {
-    if (!gdePaintState.active) return;
-
-    const maxX = Math.max(pad + 1, window.innerWidth - pad);
-    const maxY = Math.max(pad + 1, window.innerHeight - pad);
-
-    let nextX = (gdePaintState.autoX ?? window.innerWidth * 0.5) + gdePaintState.autoVX;
-    let nextY = (gdePaintState.autoY ?? window.innerHeight * 0.5) + gdePaintState.autoVY;
-
-    if (nextX <= pad || nextX >= maxX) {
-      gdePaintState.autoVX *= -1;
-      nextX = Math.min(maxX, Math.max(pad, nextX));
-    }
-    if (nextY <= pad || nextY >= maxY) {
-      gdePaintState.autoVY *= -1;
-      nextY = Math.min(maxY, Math.max(pad, nextY));
-    }
-
-    gdePaintState.autoX = nextX;
-    gdePaintState.autoY = nextY;
-    updateGdeDrawPoint(nextX, nextY, cursorEl);
-
-    gdePaintState.autoDrawFrameId = window.requestAnimationFrame(tick);
-  };
-
-  if (gdePaintState.autoDrawFrameId) {
-    window.cancelAnimationFrame(gdePaintState.autoDrawFrameId);
-  }
-  gdePaintState.autoDrawFrameId = window.requestAnimationFrame(tick);
 }
 
 function startGdePaintMode() {
@@ -1372,7 +1326,7 @@ function syncGdePaintMode(slug) {
 function enhanceGodOthersLink(container, slug) {
   if (slug !== GOD_TARGET_SLUG || !container) return;
   const phrase = state.lang === 'cat' ? 'altres coses' : 'other things';
-  const pdfUrl = '/data/top 10 slides web provisional.pdf';
+  const pdfUrl = '/data/top%2010%20slides%20web%20provisional.pdf';
 
   replaceFirstPhraseWithNode(container, phrase, (matchedText) => {
     const a = document.createElement('a');
@@ -1608,10 +1562,10 @@ function buildQueryString(slug, lang = state.lang) {
 }
 
 function buildPath(slug, lang = state.lang) {
-  if (!slug || slug === 'about') return '/';
-  const safeSlug = encodeURIComponent(slug);
   const safeLang = lang === 'cat' ? 'cat' : 'en';
-  return `/project/${safeSlug}/${safeLang}`;
+  if (!slug || slug === 'about') return `/${safeLang}`;
+  const safeSlug = encodeURIComponent(slug);
+  return `/${safeLang}/${safeSlug}`;
 }
 
 function toAbsoluteURL(path) {
@@ -1787,7 +1741,12 @@ function startArbreStamping() {
   arbreStampState.digHandler = (event) => {
     digTreesAtPointer(event.clientX, event.clientY);
   };
+  arbreStampState.digTouchHandler = (event) => {
+    const touch = event.touches && event.touches[0];
+    if (touch) digTreesAtPointer(touch.clientX, touch.clientY);
+  };
   document.addEventListener('mousemove', arbreStampState.digHandler);
+  document.addEventListener('touchmove', arbreStampState.digTouchHandler, { passive: true });
   scheduleNextArbreStamp();
 }
 
@@ -1801,6 +1760,10 @@ function stopArbreStamping() {
   if (arbreStampState.digHandler) {
     document.removeEventListener('mousemove', arbreStampState.digHandler);
     arbreStampState.digHandler = null;
+  }
+  if (arbreStampState.digTouchHandler) {
+    document.removeEventListener('touchmove', arbreStampState.digTouchHandler);
+    arbreStampState.digTouchHandler = null;
   }
   clearDigHoles();
   clearArbreStamps();
@@ -1972,7 +1935,6 @@ async function renderSlide(withTransition = true) {
   el.slideLinks.classList.toggle('about-reveal-active', slug === ABOUT_TARGET_SLUG && aboutRevealState.active);
 
   // Image
-  el.slideImage.classList.toggle('corporate-image-frame', slug === 'corporate');
   el.slideImage.classList.toggle('foc-image-large', slug === 'foc');
   if (slide.image) {
     const responsive = getResponsiveImageSources(slide.image);
@@ -2180,17 +2142,13 @@ function closeImageModal() {
 
 // === URL parsing ===
 function parseURL() {
-  // Support path-based URLs: /project/:slug/:lang
-  const path = window.location.pathname || '/';
-  const parts = path.split('/').filter(Boolean);
-  if (parts[0] === 'project') {
-    const slug = parts[1] || null;
-    const lang = parts[2] || null;
-    if (slug && state.projects.includes(slug)) {
-      state.currentProjectIndex = state.projects.indexOf(slug);
-    }
-    if (lang === 'en' || lang === 'cat' || lang === 'ca') {
-      state.lang = (lang === 'en') ? 'en' : 'cat';
+  const segments = window.location.pathname.split('/').filter(Boolean);
+
+  // Clean URL: /:lang or /:lang/:slug
+  if (segments.length >= 1 && (segments[0] === 'en' || segments[0] === 'cat')) {
+    state.lang = segments[0] === 'cat' ? 'cat' : 'en';
+    if (segments[1] && state.projects.includes(segments[1])) {
+      state.currentProjectIndex = state.projects.indexOf(segments[1]);
     }
     return;
   }
